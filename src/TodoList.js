@@ -1,6 +1,8 @@
 import { Box, Button, Grid, List, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import Modal from './Modal';
+import NavTabs from './NavTabs';
 import SearchTodo from './Search';
 import TodoListItem from './TodoListItem';
 
@@ -51,12 +53,20 @@ const TodoList = () => {
 
     const handleEditListItem = (id, title) => {
 
+        if (title == todos[id - 1].title) return
+
         const dataObject = {
             id,
             title
         };
 
-        return fetch(`http://localhost:3000/todos/${id}`, {
+        const newArr = [
+            ...todos,
+        ]
+
+        newArr[id - 1].title = title;
+
+        fetch(`http://localhost:3000/todos/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -66,10 +76,10 @@ const TodoList = () => {
             .then(res => {
                 if (res.ok) { console.log("HTTP request successful") }
                 else { console.log("HTTP request unsuccessful") }
-                return res
             })
-            .then(res => res.json())
-            .then(data => console.log(data))
+            .then(res => {
+                setTodos(newArr);
+            })
             .catch(error => console.log(error))
         // .then(() => setTodos())
     }
@@ -81,8 +91,15 @@ const TodoList = () => {
             return todo;
         }
     }).map(({ id, ...props }) => {
-        return <TodoListItem key={id} id={id} props={props} onEdit={handleEditListItem} onDelete={() => { handleListItemDelete(id) }} />
-    });
+        return <TodoListItem
+            key={id}
+            id={id}
+            props={props}
+            onEdit={handleEditListItem}
+            onDelete={() => { handleListItemDelete(id) }}
+        />
+    })
+
 
     const todosLastElementId = todos.length > 0 ? +todos.at(-1).id + 1 : 0;
 
@@ -93,6 +110,7 @@ const TodoList = () => {
                     <Typography sx={{}} variant="h6" component="div">
                         Todo list
                     </Typography>
+
                     <Button
                         onClick={handleClickOpen}
                         variant="outlined">+</Button>
@@ -103,6 +121,9 @@ const TodoList = () => {
                         setTodos={setTodos}
                         todoId={todosLastElementId}
                     />
+                </Box>
+                <Box sx={{ mt: 2, mb: 2 }}>
+                    <NavTabs />
                 </Box>
                 <SearchTodo setQuery={setQuery} />
                 <List>

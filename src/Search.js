@@ -50,7 +50,6 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     },
 }));
 
-
 const SearchTodo = ({ setQuery }) => {
     return (
         <Box sx={{ flexGrow: 1 }}>
