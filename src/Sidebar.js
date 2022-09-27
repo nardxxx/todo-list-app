@@ -5,7 +5,6 @@ const Sidebar = () => {
     const [selectedIndex, setSelectedIndex] = React.useState(1);
 
     const handleListItemClick = (e, i) => {
-        console.log(i);
         setSelectedIndex(i);
     };
 

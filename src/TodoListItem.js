@@ -1,21 +1,73 @@
-import { Checkbox, IconButton, ListItem, ListItemText, TextField } from '@mui/material';
 import React, { useState } from 'react';
+import { Checkbox, IconButton, ListItem, ListItemText, TextField } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import DoneIcon from '@mui/icons-material/Done';
 import { Box } from '@mui/system';
+import request from './services/fetch';
 
-const TodoListItem = ({ id, props, onDelete, onEdit }) => {
-    const [secondary, setSecondary] = React.useState(false);
+const TodoListItem = ({ id, props, todoArr, setTodos }) => {
+    const [completed, setCompleted] = useState(props.completed);
     const [title, setTitle] = useState(props.title);
-    const [editedTitle, setEditedTitle] = useState(title);
+    const [editedTitle, setEditedTitle] = useState(props.title);
     const [visible, setVisible] = useState(false);
+
+    const handleListItemDelete = (id) => {
+        request(`http://localhost:3000/todos/${id}`,
+            'delete'
+        )
+            .then(() => setTodos(todoArr.filter(todo => todo.id !== id)))
+    }
+
+    const handleEditListItem = (id, title) => {
+        const currentIndexOfTodo = todoArr.findIndex((item) => item.id === id);
+
+        if (title === todoArr[currentIndexOfTodo].title) return
+
+        const newArr = [
+            ...todoArr,
+        ]
+
+        newArr[currentIndexOfTodo].title = title;
+
+        request(`http://localhost:3000/todos/${id}`,
+            'PUT',
+            newArr[currentIndexOfTodo]
+        )
+
+            .then(res => {
+                if (res.ok) { console.log("HTTP request successful") }
+                else { console.log("HTTP request unsuccessful") }
+            })
+            .then(res => {
+                setTodos(newArr);
+            })
+            .catch(error => console.log(error))
+    }
+
+    const handleCheck = (id, completed) => {
+
+        const currentIndexOfTodo = todoArr.findIndex((item) => item.id === id);
+
+        const newArr = [
+            ...todoArr
+        ]
+        newArr[currentIndexOfTodo].completed = !completed;
+        request(`http://localhost:3000/todos/${id}`,
+            'put',
+            newArr[currentIndexOfTodo]
+        )
+            .then(res => {
+                setTodos(newArr);
+                setCompleted(() => !completed);
+            })
+            .catch(error => console.log(error))
+    }
 
     const editTodo = () => {
         setTitle(editedTitle)
-        onEdit(id, editedTitle);
+        handleEditListItem(id, editedTitle);
     }
-
     return (
         <ListItem
             button={true}
@@ -35,19 +87,24 @@ const TodoListItem = ({ id, props, onDelete, onEdit }) => {
                         onClick={(e) => { setVisible(false); editTodo() }}>
                         <DoneIcon />
                     </IconButton>
-                    <IconButton edge="end" aria-label="delete" onClick={onDelete}>
+                    <IconButton edge="end" aria-label="delete" onClick={() => { handleListItemDelete(id) }}>
                         <DeleteIcon />
                     </IconButton>
                 </Box>
             }
         >
-            <Checkbox sx={{
-                backgroundColor: 'transparent', '&:hover': { backgroundColor: "transparent" }
-            }} />
+            <Checkbox
+                checked={completed}
+                sx={{
+                    backgroundColor: 'transparent', '&:hover': { backgroundColor: "transparent" }
+                }}
+                onClick={() => {
+                    handleCheck(id, completed);
+                }}
+            />
             <ListItemText
                 sx={{ display: visible ? 'none' : 'block' }}
                 primary={title}
-                secondary={secondary ? 'Secondary text' : null}
             />
             <TextField
                 value={editedTitle}

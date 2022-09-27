@@ -1,9 +1,8 @@
-import { Box, Button, Grid, List, Typography } from '@mui/material';
+import { Box, Collapse, Grid, List } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { useCallback } from 'react';
-import Modal from './Modal';
-import NavTabs from './NavTabs';
+import AppHeader from './AppHeader';
 import SearchTodo from './Search';
+import TabPanel from './TabPanel';
 import TodoListItem from './TodoListItem';
 
 const TodoList = () => {
@@ -14,120 +13,73 @@ const TodoList = () => {
             .then(res => { setTodos(res) })
     }, [])
 
-    const [open, setOpen] = React.useState(false);
     const [todos, setTodos] = useState([]);
+
+    const [tabValue, setTabValue] = React.useState(0);
     const [query, setQuery] = useState('')
 
-    const handleClickOpen = () => {
-        setOpen(true);
-    };
+    const createList = (arr) => {
+        return arr.map((todo) => {
+            const { id, ...props } = todo;
+            return <Collapse key={id}>
+                <TodoListItem
+                    id={id}
+                    key={id}
+                    setTodos={setTodos}
+                    props={props}
+                    todoArr={todos}
+                />
+            </Collapse>
 
-    const handleClose = () => {
-        setOpen(false);
-    };
-
-    const handleAddTodo = (id, title, setTodos) => {
-        const newTodo = { id, title };
-
-        const options = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        }
-
-        fetch('http://localhost:3000/todos',
-            {
-                ...options,
-                body: JSON.stringify(newTodo)
-            })
-            .then(() => setTodos([...todos, newTodo]));
-    }
-
-    const handleListItemDelete = (id) => {
-        return fetch(`http://localhost:3000/todos/${id}`, {
-            method: 'DELETE'
         })
-            .then(() => setTodos(todos.filter(todo => todo.id != id)))
     }
 
-    const handleEditListItem = (id, title) => {
-
-        if (title == todos[id - 1].title) return
-
-        const dataObject = {
-            id,
-            title
-        };
-
-        const newArr = [
-            ...todos,
-        ]
-
-        newArr[id - 1].title = title;
-
-        fetch(`http://localhost:3000/todos/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dataObject)
-        })
-            .then(res => {
-                if (res.ok) { console.log("HTTP request successful") }
-                else { console.log("HTTP request unsuccessful") }
-            })
-            .then(res => {
-                setTodos(newArr);
-            })
-            .catch(error => console.log(error))
-        // .then(() => setTodos())
-    }
-
-    const filteredList = todos.filter(todo => {
+    let filteredTodos = todos.filter(todo => {
+        if (todo.completed === true) return false
+        if (todos.length < 1) return 'Add new todo'
         if (query === "") {
             return todo;
         } else if (todo.title.toLowerCase().includes(query.toLowerCase())) {
             return todo;
         }
-    }).map(({ id, ...props }) => {
-        return <TodoListItem
-            key={id}
-            id={id}
-            props={props}
-            onEdit={handleEditListItem}
-            onDelete={() => { handleListItemDelete(id) }}
-        />
+        return false;
+    })
+    let completedTodos = todos.filter(todo => {
+        if (todos.length < 1) return 'There are no completed todos'
+        if (todo.completed === false) return false
+        if (query === "") {
+            return todo;
+        } else if (todo.title.toLowerCase().includes(query.toLowerCase()) && todo.completed === true) {
+            return todo;
+        }
+        return false;
     })
 
+    const filteredList = createList(filteredTodos);
+    const completedList = createList(completedTodos);
 
-    const todosLastElementId = todos.length > 0 ? +todos.at(-1).id + 1 : 0;
 
     return (
         <Box sx={{ flexGrow: 1, maxWidth: 752, margin: '0 auto' }}>
             <Grid item xs={12} md={6}>
-                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', mt: 5, mb: 2 }}>
-                    <Typography sx={{}} variant="h6" component="div">
-                        Todo list
-                    </Typography>
-
-                    <Button
-                        onClick={handleClickOpen}
-                        variant="outlined">+</Button>
-                    <Modal
-                        open={open}
-                        onClose={handleClose}
-                        addTodo={handleAddTodo}
-                        setTodos={setTodos}
-                        todoId={todosLastElementId}
-                    />
-                </Box>
-                <Box sx={{ mt: 2, mb: 2 }}>
-                    <NavTabs />
-                </Box>
+                <AppHeader
+                    todoArr={todos}
+                    setTodos={setTodos}
+                    tabValue={tabValue}
+                    setTabValue={setTabValue}
+                />
                 <SearchTodo setQuery={setQuery} />
                 <List>
-                    {filteredList.length > 0 ? filteredList : 'No matches'}
+                    <TabPanel
+                        children={filteredList}
+                        value={tabValue}
+                        index={0}
+                    />
+                    <TabPanel
+                        children={completedList}
+                        value={tabValue}
+                        index={1}
+                    />
                 </List>
             </Grid >
         </Box >

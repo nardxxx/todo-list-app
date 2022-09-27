@@ -27,25 +27,25 @@ function LinkTab(props) {
     );
 }
 
-export default function NavTabs() {
-    const [value, setValue] = React.useState('one');
+export default function NavTabs({ value, setValue }) {
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
 
+    function a11yProps(index) {
+        return {
+            id: `simple-tab-${index}`,
+            'aria-controls': `simple-tabpanel-${index}`,
+        };
+    }
+
     return (
         <ThemeProvider theme={theme}>
             <Box sx={{ width: '100%' }}>
-                <Tabs
-                    value={value}
-                    onChange={handleChange}
-                    indicatorColor="secondary"
-                    aria-label="secondary tabs example"
-                    centered
-                >
-                    <Tab value="one" label="Active" />
-                    <Tab value="two" label="Completed" />
+                <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+                    <Tab label="All" {...a11yProps(0)} />
+                    <Tab label="Completed" {...a11yProps(1)} />
                 </Tabs>
             </Box>
         </ThemeProvider>
